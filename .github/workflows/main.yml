@@ -23,6 +23,20 @@ jobs:
     - name: Configure docker for GCP
       run: gcloud auth configure-docker us-central1-docker.pkg.dev
 
+    - name: Setup project in GCP
+      run: gcloud config set project jetrr-cloud
+
+    - name: Authenticate with GCP
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Get GKE credentials
+      uses: google-github-actions/get-gke-credentials@v2
+      with:
+        cluster_name: 'gpu-cluster-auto'
+        location: 'us-central1-f'
+
     - name: Build Docker image
       run: docker build -t k8-event-streamer .
 
@@ -30,22 +44,10 @@ jobs:
       if: ${{ github.ref == 'refs/heads/main' }}
       run: docker tag k8-event-streamer us-central1-docker.pkg.dev/jetrr-cloud/training-app/k8-event-streamer
 
-    - name: Authenticate with GCP
-      uses: google-github-actions/auth@v1
-      with:
-        credentials_json: ${{ secrets.GCP_SA_KEY }}
-
     - name: Push Docker image to Artifact Registry for Main
       if: ${{ github.ref == 'refs/heads/main' }}
       run: docker push us-central1-docker.pkg.dev/jetrr-cloud/training-app/k8-event-streamer
 
-    - name: Setup project in GCP
-      run: gcloud config set project jetrr-cloud
-
-    - name: Get GKE credentials
-      run: gcloud container clusters get-credentials gpu-cluster-auto --zone us-central1-f
-
     - name: Deploy to GKE
       if: ${{ github.ref == 'refs/heads/main' }}
-      run: |
-        kubectl apply -f deploy.yml
+      run: kubectl apply -f deploy.yml
