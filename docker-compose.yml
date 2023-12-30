@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  event-streamer:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    user: root
+    volumes:
+      - .:/app
+    container_name: event-streamer
+    entrypoint: /bin/bash
+    stdin_open: true
+    tty: true
