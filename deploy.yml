@@ -17,6 +17,9 @@ spec:
       containers:
       - name: event-streamer
         image: us-central1-docker.pkg.dev/jetrr-cloud/training-app/k8-event-streamer:latest
+        env:
+        - name: ENV
+          value: production
         volumeMounts:
         - name: secret-volume
           mountPath: "/etc/secret"
