@@ -14,6 +14,9 @@ spec:
       labels:
         app: streamer
     spec:
+      nodeSelector:
+        # can only be scheduled on a node that belongs to a `basic` node pool 
+        cloud.google.com/gke-nodepool: basic
       containers:
       - name: event-streamer
         image: us-central1-docker.pkg.dev/jetrr-cloud/training-app/k8-event-streamer:latest
