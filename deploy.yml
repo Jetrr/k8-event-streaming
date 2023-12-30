@@ -19,7 +19,8 @@ spec:
         cloud.google.com/gke-nodepool: basic
       containers:
       - name: event-streamer
-        image: us-central1-docker.pkg.dev/jetrr-cloud/training-app/k8-event-streamer:latest
+        # Do Not Add any Tag (Tag is automatically added in deployment pipeline here using replacement)
+        image: us-central1-docker.pkg.dev/jetrr-cloud/training-app/k8-event-streamer
         env:
         - name: ENV
           value: production
