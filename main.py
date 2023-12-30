@@ -11,7 +11,7 @@ import sys
 
 print("EVENT STREAM SERVICE STARTING...")
 
-sys.stdout.flush()
+# sys.stdout.flush()
 
 ENV = os.environ.get("ENV", "DEV")
 
