@@ -2,6 +2,21 @@
 
 This repository contains the code for an event streaming application. The application is written in Python and is designed to be deployed to a Google Kubernetes Engine (GKE) cluster.
 
+## Message Data Format For PubSub
+
+```json
+{
+    "job_name": "job uuid here",
+    "reason": "Completed"
+}
+```
+
+The `reason` could be:
+
+1. **`SuccessfulCreate`**: Suggests that Job is Created
+2. **`Completed`**: Suggests that Job is Completed
+3. **`BackoffLimitExceeded`**: Suggests that Job has Failed after trying multiple times
+
 ## Repository Structure
 
 Here's a brief explanation of the key files and directories in this repository:
@@ -55,7 +70,6 @@ python3 main.py
 ```
 
 ## Deployment
-
 To deploy the application to GKE, you'll need to set up a service account on Google Cloud with the necessary permissions, and create a JSON key file for it. Then, run the [`create-secret.sh`](command:_github.copilot.openRelativePath?%5B%22create-secret.sh%22%5D "create-secret.sh") script to create a Kubernetes Secret from the key file.
 
 The GitHub Actions workflow in [`.github/workflows/main.yml`](command:_github.copilot.openRelativePath?%5B%22.github%2Fworkflows%2Fmain.yml%22%5D ".github/workflows/main.yml") will automatically handle the rest of the deployment process whenever changes are pushed to the `main` branch. It builds a new Docker image, pushes it to the Google Artifact Registry, and updates the Deployment on GKE.
