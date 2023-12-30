@@ -21,7 +21,7 @@ spec:
         - name: secret-volume
           mountPath: "/etc/secret"
           readOnly: true
-    volumes:
-    - name: secret-volume
-      secret:
-        secretName: sa-keyfile
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: sa-keyfile
