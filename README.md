@@ -39,7 +39,19 @@ docker-compose build
 3. Run the application's services:
 
 ```sh
-docker-compose up
+docker-compose up -d
+```
+
+4. Run this command to enter the bash of the container
+
+```sh
+docker exec -it event-streamer bash
+```
+
+5. Run your script inside the container
+
+```sh
+python3 main.py
 ```
 
 ## Deployment
