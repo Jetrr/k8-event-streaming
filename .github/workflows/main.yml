@@ -8,6 +8,13 @@ on:
 jobs:
   DockerImagePushAndDeploy:
     runs-on: ubuntu-latest
+    env:  # Define environment variables for the entire job
+      IMAGE_NAME: k8-event-streamer
+      IMAGE_TAG: ${{ github.sha }}
+      GCP_PROJECT_ID: jetrr-cloud
+      GCR_HOSTNAME: us-central1-docker.pkg.dev
+      CLUSTER_NAME: gpu-cluster-auto
+      CLUSTER_LOCATION: us-central1-f
 
     steps:
     - name: Checkout code
@@ -17,14 +24,14 @@ jobs:
       uses: google-github-actions/setup-gcloud@v1
       with:
         service_account_key: ${{ secrets.GCP_SA_KEY }}
-        project_id: jetrr-cloud
+        project_id: ${{ env.GCP_PROJECT_ID }}
         export_default_credentials: true
 
     - name: Configure docker for GCP
-      run: gcloud auth configure-docker us-central1-docker.pkg.dev
+      run: gcloud auth configure-docker ${{ env.GCR_HOSTNAME }}
 
     - name: Setup project in GCP
-      run: gcloud config set project jetrr-cloud
+      run: gcloud config set project ${{ env.GCP_PROJECT_ID }}
 
     - name: Authenticate with GCP
       uses: google-github-actions/auth@v1
@@ -34,19 +41,28 @@ jobs:
     - name: Get GKE credentials
       uses: google-github-actions/get-gke-credentials@v2
       with:
-        cluster_name: 'gpu-cluster-auto'
-        location: 'us-central1-f'
+        cluster_name: ${{ env.CLUSTER_NAME }}
+        location: ${{ env.CLUSTER_LOCATION }}
 
-    - name: Build Docker image
-      run: docker build -t k8-event-streamer .
+    - name: Build and tag Docker image
+      run: |
+        SHORT_SHA=$(echo $IMAGE_TAG | cut -c1-7)
+        docker build -t $GCR_HOSTNAME/$GCP_PROJECT_ID/training-app/$IMAGE_NAME:$SHORT_SHA .
 
-    - name: TAG Docker image for Production
-      if: ${{ github.ref == 'refs/heads/main' }}
-      run: docker tag k8-event-streamer us-central1-docker.pkg.dev/jetrr-cloud/training-app/k8-event-streamer
+    - name: Push Docker image to Artifact Registry
+      run: |
+        SHORT_SHA=$(echo $IMAGE_TAG | cut -c1-7)
+        docker push $GCR_HOSTNAME/$GCP_PROJECT_ID/training-app/$IMAGE_NAME:$SHORT_SHA
 
-    - name: Push Docker image to Artifact Registry for Main
-      if: ${{ github.ref == 'refs/heads/main' }}
-      run: docker push us-central1-docker.pkg.dev/jetrr-cloud/training-app/k8-event-streamer
+    - name: Update deployment file with the new image tag
+      run: |
+        SHORT_SHA=$(echo $IMAGE_TAG | cut -c1-7)
+        sed -i "s|${{ env.IMAGE_NAME }}:<TAG>|${{ env.IMAGE_NAME }}:$SHORT_SHA|g" deploy.yml
+
+    - name: Update deployment file with the new image tag
+      run: |
+        SHORT_SHA=$(echo $IMAGE_TAG | cut -c1-7)
+        sed -i "s|${IMAGE_NAME}:<TAG>|${IMAGE_NAME}:$SHORT_SHA|g" deploy.yml
 
     - name: Deploy to GKE
       if: ${{ github.ref == 'refs/heads/main' }}
