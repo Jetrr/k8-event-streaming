@@ -25,6 +25,7 @@ PROJECT_ID = "jetrr-cloud"
 CLUSTER_LOCATION = "us-central1-f"
 CLUSTER_NAME = "gpu-cluster-auto"
 NAMESPACE = "default"
+TOPIC_NAME = "gke-job-event-stream"
 
 credentials = service_account.Credentials.from_service_account_file(
     filename=KEYFILE_PATH,
@@ -80,7 +81,22 @@ while True:
     try:
         # Start watching for events
         for event in watch.stream(k8_coreApi.list_namespaced_event, namespace=NAMESPACE):
-            print(event)
+            
+            # bypass all events that are not related to `Job`
+            object_kind = event["object"].involved_object.kind # Job
+            if object_kind != "Job":
+                continue
 
+            job_name = event["object"].involved_object.name
+            reason = event["object"].reason
+
+            print(f"Publishing {job_name} with reason: `{reason}`") # For debugging
+
+            publish_topic(TOPIC_NAME, {
+                "job_name": job_name,
+                "reason": reason
+            })
+
+            # print("Published Sucessfully")
     except Exception as e:
-        print(e)
+        print("Exception Occured:", e)
