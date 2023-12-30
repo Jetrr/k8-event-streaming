@@ -1,18 +1,3 @@
-version: '3'
-
-services:
-  event-streamer:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    user: root
-    volumes:
-      - .:/app
-    container_name: flask-backend
-    entrypoint: /bin/bash
-    stdin_open: true
-    tty: true
-    ports:
-      - "5000:5000"
-    environment:
-      - GOOGLE_APPLICATION_CREDENTIALS=keyfile.json
+google-cloud-pubsub
+google-cloud-container
+kubernetes
