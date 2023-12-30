@@ -10,7 +10,7 @@ import os
 
 ENV = os.environ.get("ENV", "DEV")
 
-PROD_KEYFILE_PATH = "/etc/secrets/keyfile.json" # mounted this secret in the k8 deployment file
+PROD_KEYFILE_PATH = "/etc/secret/keyfile.json" # mounted this secret in the k8 deployment file
 
 KEYFILE_PATH = "keyfile.json"
 
