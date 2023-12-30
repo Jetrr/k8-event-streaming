@@ -6,8 +6,20 @@ from google.auth.transport.requests import Request
 from tempfile import NamedTemporaryFile
 import base64
 import json
+import os
 
-KEYFILE_PATH = "/etc/secrets" # mounted this secret in the k8 deployment file
+ENV = os.environ.get("ENV", "DEV")
+
+PROD_KEYFILE_PATH = "/etc/secrets/keyfile.json" # mounted this secret in the k8 deployment file
+
+KEYFILE_PATH = "keyfile.json"
+
+if ENV == "production":
+    KEYFILE_PATH = PROD_KEYFILE_PATH
+    print("PRODUCTION ENVIRONMENT DETECTED")
+else:
+    print("DEV ENVIRONMENT DETECTED")
+
 
 PROJECT_ID = "jetrr-cloud"
 CLUSTER_LOCATION = "us-central1-f"
