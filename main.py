@@ -7,6 +7,11 @@ from tempfile import NamedTemporaryFile
 import base64
 import json
 import os
+import sys
+
+print("EVENT STREAM SERVICE STARTING...")
+
+sys.stdout.flush()
 
 ENV = os.environ.get("ENV", "DEV")
 
