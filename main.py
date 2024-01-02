@@ -79,26 +79,26 @@ k8_coreApi = k8s_client.CoreV1Api()
 # Create a watch object
 watch = k8s_watch.Watch()
 
-while True:
-    try:
+
         # Start watching for events
-        for event in watch.stream(k8_coreApi.list_namespaced_event, namespace=NAMESPACE):
-            
-            # bypass all events that are not related to `Job`
-            object_kind = event["object"].involved_object.kind # Job
-            if object_kind != "Job":
-                continue
+for event in watch.stream(k8_coreApi.list_namespaced_event, namespace=NAMESPACE):
+    try:
+        
+        # bypass all events that are not related to `Job`
+        object_kind = event["object"].involved_object.kind # Job
+        if object_kind != "Job":
+            continue
 
-            job_name = event["object"].involved_object.name
-            reason = event["object"].reason
+        job_name = event["object"].involved_object.name
+        reason = event["object"].reason
 
-            print(f"Publishing {job_name} with reason: `{reason}`") # For debugging
+        print(f"Publishing {job_name} with reason: `{reason}`") # For debugging
 
-            publish_topic(TOPIC_NAME, {
-                "job_name": job_name,
-                "reason": reason
-            })
+        publish_topic(TOPIC_NAME, {
+            "job_name": job_name,
+            "reason": reason
+        })
 
-            # print("Published Sucessfully")
+        # print("Published Sucessfully")
     except Exception as e:
         print("Exception Occured:", e)
