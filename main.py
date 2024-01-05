@@ -1,6 +1,7 @@
 from google.cloud import pubsub_v1, container_v1
 from google.oauth2 import service_account
 from kubernetes import client as k8s_client, watch as k8s_watch
+import kubernetes
 from google.cloud import container_v1
 from google.auth.transport.requests import Request
 from tempfile import NamedTemporaryFile
@@ -34,9 +35,9 @@ credentials = service_account.Credentials.from_service_account_file(
     # IMPORTANT: scopes must be set to access the refresh the Token Manually.
     scopes=["https://www.googleapis.com/auth/cloud-platform"],
 )
-credentials.refresh(Request())
 
 def get_k8s_client():
+    credentials.refresh(Request())
     token = credentials.token
     # Create the Cluster Manager Client
     cluster_client = container_v1.ClusterManagerClient(
@@ -73,32 +74,41 @@ def publish_topic(topic_name, data: dict):
     future = publisher.publish(topic_path, data)
     future.result()
 
-# Create a Kubernetes API client
-k8_coreApi = k8s_client.CoreV1Api()
-
-# Create a watch object
-watch = k8s_watch.Watch()
-
-
-        # Start watching for events
-for event in watch.stream(k8_coreApi.list_namespaced_event, namespace=NAMESPACE):
+while True:
     try:
-        
-        # bypass all events that are not related to `Job`
-        object_kind = event["object"].involved_object.kind # Job
-        if object_kind != "Job":
+        # Create a Kubernetes API client
+        k8_coreApi = k8s_client.CoreV1Api()
+
+        # Create a watch object
+        watch = k8s_watch.Watch()
+        # Start watching for events
+        for event in watch.stream(k8_coreApi.list_namespaced_event, namespace=NAMESPACE):
+            try:
+                
+                # bypass all events that are not related to `Job`
+                object_kind = event["object"].involved_object.kind # Job
+                if object_kind != "Job":
+                    continue
+
+                job_name = event["object"].involved_object.name
+                reason = event["object"].reason
+
+                print(f"Publishing {job_name} with reason: `{reason}`") # For debugging
+
+                publish_topic(TOPIC_NAME, {
+                    "job_name": job_name,
+                    "reason": reason
+                })
+
+                # print("Published Sucessfully")
+            except Exception as e:
+                print("Exception Occured:", e)
+
+    except kubernetes.client.exceptions.ApiException as e:
+        # After some time the token would expire, so we need to refresh it
+        if e.status == 401:
+            print("Token expired, refreshing credentials")
+            k8s_client = get_k8s_client()  # Reinitialize the k8s client (with new token)
             continue
-
-        job_name = event["object"].involved_object.name
-        reason = event["object"].reason
-
-        print(f"Publishing {job_name} with reason: `{reason}`") # For debugging
-
-        publish_topic(TOPIC_NAME, {
-            "job_name": job_name,
-            "reason": reason
-        })
-
-        # print("Published Sucessfully")
-    except Exception as e:
-        print("Exception Occured:", e)
+        else:
+            raise
