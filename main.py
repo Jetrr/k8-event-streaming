@@ -78,7 +78,7 @@ while True:
     try:
         # Create a Kubernetes API client
         k8_coreApi = k8s_client.CoreV1Api()
-
+        k8s_client = get_k8s_client()  # Reinitialize the k8s client (with new token)
         # Create a watch object
         watch = k8s_watch.Watch()
         # Start watching for events
@@ -106,9 +106,23 @@ while True:
 
     except kubernetes.client.exceptions.ApiException as e:
         # After some time the token would expire, so we need to refresh it
+        # Handle token expiration
         if e.status == 401:
             print("Token expired, refreshing credentials")
-            k8s_client = get_k8s_client()  # Reinitialize the k8s client (with new token)
+            continue
+        # Handle resourceVersion too old
+        elif e.status == 410:
+            print("Resource Version too old...")
+            continue
+        # Handle rate limiting
+        elif e.status == 429:
+            print("Rate Limiting Error Occured...")
+            continue
+        # Handle server errors
+        elif 500 <= e.status < 600:
+            print("Server Error At GKE Occured...")
+            print(e)
             continue
         else:
+            # Handle other ApiException cases...
             raise
