@@ -28,7 +28,7 @@ PROJECT_ID = "jetrr-cloud"
 CLUSTER_LOCATION = "us-central1-f"
 CLUSTER_NAME = "gpu-cluster-auto"
 NAMESPACE = "default"
-TOPIC_NAME = "gke-job-event-stream"
+TOPIC_NAME = "vertex-job-status-update-topic-sub"
 
 credentials = service_account.Credentials.from_service_account_file(
     filename=KEYFILE_PATH,
